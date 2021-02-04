@@ -2,6 +2,7 @@ package tcp
 
 import (
 	"context"
+	"log"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -141,12 +142,14 @@ func (c *Checker) CheckAddrZeroLinger(addr string, timeout time.Duration, zeroLi
 	deadline := time.Now().Add(timeout)
 
 	// Parse address
-	rAddr, err := parseSockAddr(addr)
+	rAddr, ipv6, err := parseSockAddr(addr)
 	if err != nil {
 		return err
 	}
+	log.Print(ipv6)
+
 	// Create socket with options set
-	fd, err := createSocketZeroLinger(zeroLinger)
+	fd, err := createSocketZeroLinger(zeroLinger, ipv6)
 	if err != nil {
 		return err
 	}
@@ -155,6 +158,7 @@ func (c *Checker) CheckAddrZeroLinger(addr string, timeout time.Duration, zeroLi
 
 	// Connect to the address
 	if success, cErr := connect(fd, rAddr); cErr != nil {
+		log.Print("tried to connect: ", cErr)
 		// If there was an error, return it.
 		return &ErrConnect{cErr}
 	} else if success {
